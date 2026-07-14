@@ -1,0 +1,28 @@
+# Python / Backend
+backend/venv/
+backend/__pycache__/
+backend/app/__pycache__/
+backend/.env
+backend/*.db
+backend/uploads/
+.env
+
+# Angular / Frontend
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+frontend/tmp/
+frontend/.sass-cache/
+frontend/connect.lock
+frontend/coverage/
+
+# IDE / System files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+Thumbs.db
+Desktop.ini
