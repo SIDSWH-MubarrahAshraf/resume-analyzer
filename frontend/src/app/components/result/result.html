@@ -1,0 +1,213 @@
+<div class="result-container">
+  
+  <!-- Navigation Header -->
+  <div class="navigation-bar">
+    <button class="btn btn-back" (click)="goBack()">
+      ← Back to Dashboard
+    </button>
+    <div class="header-metadata">
+      <span class="report-badge">Report ID: #{{ analysis()?.id }}</span>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="page-loader">
+      <div class="spinner large"></div>
+      <p>Analyzing resume contents and preparing assessment...</p>
+    </div>
+  }
+
+  <!-- Error Banner -->
+  @if (errorMessage()) {
+    <div class="error-banner">
+      <span class="error-icon">⚠️</span>
+      <p>{{ errorMessage() }}</p>
+    </div>
+  }
+
+  <!-- Analysis Content -->
+  @if (!isLoading() && analysis()) {
+    @let data = analysis()!;
+
+    <div class="analysis-grid">
+      
+      <!-- Section 1: Score & Executive Summary -->
+      <div class="full-width-card summary-card">
+        
+        <div class="score-radial-container">
+          <!-- Circular Progress SVG -->
+          <div class="svg-wrapper">
+            <svg class="progress-ring" width="130" height="130">
+              <circle class="progress-ring-bg" stroke="rgba(255,255,255,0.03)" stroke-width="8" fill="transparent" r="54" cx="65" cy="65"/>
+              <circle 
+                class="progress-ring-bar" 
+                [class]="getScoreColorClass(data.score)"
+                stroke-width="8" 
+                stroke-linecap="round"
+                fill="transparent" 
+                r="54" 
+                cx="65" 
+                cy="65"
+                [style.strokeDashoffset]="getDashOffset(data.score)"
+              />
+            </svg>
+            <div class="score-display">
+              <span class="score-num">{{ data.score }}</span>
+              <span class="score-denom">/100</span>
+            </div>
+          </div>
+          
+          <div class="score-description">
+            <span class="score-label">Resume Score</span>
+            <h2 class="score-rating" [class]="getScoreColorClass(data.score)">{{ getScoreRating(data.score) }}</h2>
+          </div>
+        </div>
+
+        <div class="summary-details">
+          <h3>AI Profile Summary</h3>
+          <p class="summary-text">{{ data.summary }}</p>
+        </div>
+
+      </div>
+
+      <!-- Section 2: ATS Checkup & Career Recommendation -->
+      <div class="card ats-card">
+        <div class="card-header-icon">🤖</div>
+        <div class="card-title-group">
+          <h3>ATS Compatibility</h3>
+          <p class="card-subtitle">How well Applicant Tracking Systems will parse your layout.</p>
+        </div>
+        
+        <div class="ats-stats">
+          <div class="ats-score-pill" [class.high]="data.ats_compatibility.ats_score >= 80" [class.mid]="data.ats_compatibility.ats_score >= 60 && data.ats_compatibility.ats_score < 80" [class.low]="data.ats_compatibility.ats_score < 60">
+            ATS Score: {{ data.ats_compatibility.ats_score }}%
+          </div>
+        </div>
+
+        <p class="ats-feedback">{{ data.ats_compatibility.feedback }}</p>
+
+        <!-- Formatting Checklist -->
+        <div class="formatting-checklist">
+          <h4>Formatting Obstacles</h4>
+          @if (data.ats_compatibility.formatting_issues.length === 0) {
+            <div class="check-success">
+              <span class="check-icon">✓</span>
+              <p>No major formatting hurdles found! Layout is ATS-friendly.</p>
+            </div>
+          } @else {
+            <ul class="checklist-items">
+              @for (issue of data.ats_compatibility.formatting_issues; track issue) {
+                <li class="checklist-item warning">
+                  <span class="check-icon">!</span>
+                  <p>{{ issue }}</p>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
+      <div class="card career-card">
+        <div class="card-header-icon">🎯</div>
+        <div class="card-title-group">
+          <h3>Suggested Career Roles</h3>
+          <p class="card-subtitle">AI-recommended career pathways aligned with your experience.</p>
+        </div>
+
+        <p class="career-desc">Based on the skills and projects mentioned in your resume, you are well-matched for these positions:</p>
+
+        <div class="roles-badges">
+          @for (role of data.suggested_roles; track role) {
+            <span class="role-badge">{{ role }}</span>
+          }
+        </div>
+      </div>
+
+      <!-- Section 3: Deep Dive Tabs (Improvements, Skills, Grammar) -->
+      <div class="full-width-card tabs-card">
+        <div class="tabs-header">
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'improvements'" 
+            (click)="setActiveTab('improvements')"
+          >
+            📋 Suggested Improvements
+          </button>
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'skills'" 
+            (click)="setActiveTab('skills')"
+          >
+            💡 Missing Skills
+          </button>
+          <button 
+            class="tab-btn" 
+            [class.active]="activeTab() === 'grammar'" 
+            (click)="setActiveTab('grammar')"
+          >
+            ✏️ Grammar & Capitalization
+          </button>
+        </div>
+
+        <div class="tab-content">
+          <!-- Improvements Tab -->
+          @if (activeTab() === 'improvements') {
+            <div class="improvements-view">
+              <p class="tab-instruction">Implement these concrete, actionable tips to increase resume impact:</p>
+              <ul class="list-feedback">
+                @for (imp of data.suggested_improvements; track imp) {
+                  <li>
+                    <span class="feedback-bullet">⚡</span>
+                    <p>{{ imp }}</p>
+                  </li>
+                }
+              </ul>
+            </div>
+          }
+
+          <!-- Skills Tab -->
+          @if (activeTab() === 'skills') {
+            <div class="skills-view">
+              <p class="tab-instruction">Adding these industry-relevant skills and keywords will improve your ATS search matching:</p>
+              <div class="skills-grid">
+                @for (skill of data.missing_skills; track skill) {
+                  <div class="skill-tag">
+                    <span class="plus-icon">+</span>
+                    {{ skill }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Grammar Tab -->
+          @if (activeTab() === 'grammar') {
+            <div class="grammar-view">
+              <p class="tab-instruction">Proofreading checks and corrections:</p>
+              @if (data.grammar_issues.length === 0 || (data.grammar_issues.length === 1 && data.grammar_issues[0].toLowerCase().includes('none'))) {
+                <div class="clean-grammar">
+                  <span class="verified-icon">🏆</span>
+                  <div>
+                    <h4>Clean Check!</h4>
+                    <p>No noticeable grammatical or spelling errors were detected. Excellent drafting!</p>
+                  </div>
+                </div>
+              } @else {
+                <ul class="list-feedback error-list">
+                  @for (issue of data.grammar_issues; track issue) {
+                    <li>
+                      <span class="feedback-bullet error">✖</span>
+                      <p>{{ issue }}</p>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+  }
+</div>
