@@ -13,8 +13,11 @@ from app.schemas import Resume as ResumeSchema, Analysis as AnalysisSchema, Resu
 # Ensure database tables are created
 Base.metadata.create_all(bind=engine)
 
-# Directory to store uploaded resumes
-UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
+# Directory to store uploaded resumes (fallback to /tmp in serverless environments like Vercel)
+if os.getenv("VERCEL"):
+    UPLOAD_DIR = "/tmp"
+else:
+    UPLOAD_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "uploads")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="AI Resume Analyzer API", version="1.0.0")
