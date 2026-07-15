@@ -24,10 +24,12 @@ app = FastAPI(title="AI Resume Analyzer API", version="1.0.0")
 
 # Configure CORS for frontend access
 frontend_origin = os.getenv("FRONTEND_URL", "http://localhost:4200")
+# If FRONTEND_URL is "*" or empty, we must set allow_credentials to False (browser CORS security spec rule)
+allow_all = frontend_origin == "*" or not frontend_origin
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[frontend_origin, "http://localhost:4200"],
-    allow_credentials=True,
+    allow_origins=["*"] if allow_all else [frontend_origin, "http://localhost:4200"],
+    allow_credentials=False if allow_all else True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
