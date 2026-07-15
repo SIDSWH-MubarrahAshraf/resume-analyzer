@@ -39,7 +39,7 @@ export interface UploadResponse {
   providedIn: 'root'
 })
 export class ResumeService {
-  private apiUrl =  'https://resume-analyzer-1crm.vercel.app/api';
+  private apiUrl = 'https://resume-analyzer-seven-dun.vercel.app/api';
 
   constructor(private http: HttpClient) {}
 
