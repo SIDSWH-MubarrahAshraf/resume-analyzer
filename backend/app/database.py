@@ -1,6 +1,4 @@
-git add .
-git commit -m "Fix CORS wildcard credentials conflict"
-git push origin mainimport os
+import os
 from datetime import datetime
 from sqlalchemy import create_engine, Column, Integer, String, Text, DateTime, ForeignKey, JSON
 from sqlalchemy.ext.declarative import declarative_base
