@@ -1,0 +1,124 @@
+<div class="assistant-container">
+  
+  <!-- Navigation Header -->
+  <div class="navigation-bar">
+    <button class="btn btn-back" routerLink="/">
+      ← Back to Dashboard
+    </button>
+    <div class="header-actions">
+      <button class="btn btn-action-secondary" (click)="clearChat()" title="Clear Chat History">
+        🗑️ Clear Chat
+      </button>
+      <button class="btn btn-action-secondary" (click)="toggleTts()" [title]="ttsEnabled() ? 'Mute AI Audio Responses' : 'Enable AI Audio Responses'">
+        {{ ttsEnabled() ? '🔊 Audio On' : '🔇 Audio Off' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="assistant-card">
+    <div class="assistant-header">
+      <div class="bot-avatar">🎙️</div>
+      <div class="header-info">
+        <h2>AI Career Voice Coach</h2>
+        <p class="status-indicator">
+          <span class="status-dot" [class.recording]="isListening()" [class.loading]="isLoading()"></span>
+          {{ isListening() ? 'Listening to your voice...' : isLoading() ? 'Thinking...' : 'Ready to talk' }}
+        </p>
+      </div>
+    </div>
+
+    <!-- Chat Messages Window -->
+    <div class="chat-window" #chatScrollContainer>
+      @if (messages().length === 0) {
+        <div class="empty-chat-state">
+          <div class="empty-bubble">💬</div>
+          <h3>Start the Conversation</h3>
+          <p>Tap the microphone below and ask me anything about resumes, job search, or career advice.</p>
+        </div>
+      } @else {
+        <div class="messages-list">
+          @for (msg of messages(); track $index) {
+            <div class="message-wrapper" [class.user-message]="msg.role === 'user'" [class.bot-message]="msg.role === 'model'">
+              <div class="avatar">
+                {{ msg.role === 'user' ? '👤' : '🤖' }}
+              </div>
+              <div class="message-bubble">
+                <p>{{ msg.content }}</p>
+              </div>
+            </div>
+          }
+          
+          <!-- Loading Bubble -->
+          @if (isLoading()) {
+            <div class="message-wrapper bot-message loading-bubble">
+              <div class="avatar">🤖</div>
+              <div class="message-bubble">
+                <div class="typing-indicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Live speech transcript feedback -->
+    @if (currentTranscript() || isListening()) {
+      <div class="live-transcript-box">
+        <span class="hearing-label">Hearing:</span>
+        <p class="live-text" [class.placeholder]="!currentTranscript()">
+          {{ currentTranscript() || 'Speak now, we are listening...' }}
+        </p>
+      </div>
+    }
+
+    <!-- Error Banner -->
+    @if (errorMessage()) {
+      <div class="error-banner">
+        <span class="error-icon">⚠️</span>
+        <p>{{ errorMessage() }}</p>
+      </div>
+    }
+
+    <!-- Voice Control Panel -->
+    <div class="voice-controls">
+      @if (isSpeechSupported()) {
+        <div class="mic-button-wrapper">
+          <button 
+            class="mic-btn" 
+            [class.active]="isListening()" 
+            (click)="toggleListening()" 
+            [title]="isListening() ? 'Click to stop and submit' : 'Click to start speaking'"
+            id="voice-mic-button"
+          >
+            <span class="mic-icon">{{ isListening() ? '⏹️' : '🎤' }}</span>
+            <div class="ripple" [class.pulsing]="isListening()"></div>
+          </button>
+          <p class="mic-instructions">
+            {{ isListening() ? 'Tap button to finish speaking' : 'Tap to speak' }}
+          </p>
+        </div>
+      }
+
+      <!-- Text Fallback Input -->
+      <form class="text-input-form" (submit)="onTextSubmit($event)">
+        <input 
+          type="text" 
+          placeholder="Or type your question here..." 
+          [(ngModel)]="keyboardInput" 
+          name="keyboardInput" 
+          [disabled]="isLoading()"
+          autocomplete="off"
+          class="chat-text-input"
+        />
+        <button type="submit" class="btn btn-send" [disabled]="!keyboardInput().trim() || isLoading()">
+          ➔
+        </button>
+      </form>
+    </div>
+
+  </div>
+</div>

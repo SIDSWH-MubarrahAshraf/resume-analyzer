@@ -163,3 +163,74 @@ Return ONLY the raw JSON object.
             generation_config={"response_mime_type": "application/json"}
         )
         return clean_json_response(response.text)
+
+
+def get_voice_assistant_response(question: str, history: list = None) -> str:
+    """Sends the user's voice query and chat history to the selected LLM and gets a response suited for TTS."""
+    has_gemini = GEMINI_API_KEY and GEMINI_API_KEY != "your_gemini_api_key_here"
+    has_openai = OPENAI_API_KEY and OPENAI_API_KEY != "your_openai_api_key_here"
+    
+    if not has_gemini and not has_openai:
+        # FALLBACK: Return mock conversational responses
+        print("API keys not set. Running in MOCK mode for voice assistant.")
+        mock_responses = [
+            "To build a strong tech career, focus on mastering one language and framework deeply. Doing personal projects and uploading them to GitHub helps stand out.",
+            "Make sure your resume uses action verbs and quantifies results. Instead of 'wrote APIs', write 'built 15 REST APIs using FastAPI, improving performance by 30%'.",
+            "When preparing for coding interviews, practice system design basics and standard algorithms. Explaining your thought process clearly is key.",
+            "Hello! I am your AI career coach. You can ask me about resume optimizations, interview tips, or how to target specific job roles."
+        ]
+        return random.choice(mock_responses)
+
+    system_instruction = (
+        "You are an expert AI Career Coach and Resume Consultant. "
+        "Provide short, concise, and highly professional answers to the user's questions. "
+        "Because the user is interacting with you via voice, keep your responses brief "
+        "(about 2-3 sentences where possible) and easy to listen to. "
+        "Do not use markdown formatting, list points, asterisks, bold formatting, or complex HTML formatting, "
+        "since this response will be read aloud by a text-to-speech engine. Write in standard conversational text."
+    )
+
+    if AI_PROVIDER == "openai":
+        from openai import OpenAI
+        client = OpenAI(api_key=OPENAI_API_KEY)
+        
+        messages = [
+            {"role": "system", "content": system_instruction}
+        ]
+        if history:
+            for msg in history:
+                messages.append({"role": msg.get("role"), "content": msg.get("content")})
+        messages.append({"role": "user", "content": question})
+        
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o-mini",
+                messages=messages,
+                temperature=0.7
+            )
+            return response.choices[0].message.content.strip()
+        except Exception as e:
+            print(f"OpenAI call failed: {str(e)}")
+            raise e
+
+    else:  # default to gemini
+        import google.generativeai as genai
+        genai.configure(api_key=GEMINI_API_KEY)
+        
+        model = genai.GenerativeModel('gemini-3.5-flash')
+        
+        # Build conversational context
+        formatted_prompt = f"System: {system_instruction}\n\n"
+        if history:
+            for msg in history:
+                role_name = "User" if msg.get("role") == "user" else "Model"
+                formatted_prompt += f"{role_name}: {msg.get('content')}\n"
+        formatted_prompt += f"User: {question}\nAssistant:"
+        
+        try:
+            response = model.generate_content(formatted_prompt)
+            return response.text.strip()
+        except Exception as e:
+            print(f"Gemini call failed: {str(e)}")
+            raise e
+

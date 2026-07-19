@@ -4,10 +4,11 @@ from fastapi import FastAPI, UploadFile, File, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 
 from app.database import Base, engine, get_db, Resume, Analysis
 from app.parser import extract_text
-from app.analyzer import analyze_resume_text
+from app.analyzer import analyze_resume_text, get_voice_assistant_response
 from app.schemas import Resume as ResumeSchema, Analysis as AnalysisSchema, ResumeHistoryItem
 
 # Ensure database tables are created
@@ -156,3 +157,20 @@ def delete_resume(resume_id: int, db: Session = Depends(get_db)):
     db.delete(db_resume)
     db.commit()
     return {"message": f"Resume {resume_id} deleted successfully."}
+
+
+class VoiceAskRequest(BaseModel):
+    question: str
+    history: List[dict] = []
+
+@app.post("/api/voice-assistant/ask")
+def ask_voice_assistant(request: VoiceAskRequest):
+    if not request.question.strip():
+        raise HTTPException(status_code=400, detail="Question cannot be empty.")
+    
+    try:
+        answer = get_voice_assistant_response(request.question, request.history)
+        return {"answer": answer}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Voice Assistant failed: {str(e)}")
+

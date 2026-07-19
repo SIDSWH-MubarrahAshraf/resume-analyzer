@@ -2,9 +2,14 @@
   
   <!-- Navigation Header -->
   <div class="navigation-bar">
-    <button class="btn btn-back" (click)="goBack()">
-      ← Back to Dashboard
-    </button>
+    <div style="display: flex; gap: 0.75rem;">
+      <button class="btn btn-back" (click)="goBack()">
+        ← Back to Dashboard
+      </button>
+      <a routerLink="/voice-assistant" class="btn btn-back" style="text-decoration: none; display: flex; align-items: center; gap: 0.5rem;">
+        🎙️ Voice Coach
+      </a>
+    </div>
     <div class="header-metadata">
       <span class="report-badge">Report ID: #{{ analysis()?.id }}</span>
     </div>

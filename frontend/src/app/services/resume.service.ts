@@ -35,11 +35,22 @@ export interface UploadResponse {
   uploaded_at: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ResumeService {
-  private apiUrl = 'https://resume-analyzer-seven-dun.vercel.app/api';
+  private getApiUrl(): string {
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+      return 'http://localhost:8000/api';
+    }
+    return 'https://resume-analyzer-seven-dun.vercel.app/api';
+  }
+  private apiUrl = this.getApiUrl();
 
   constructor(private http: HttpClient) {}
 
@@ -63,5 +74,9 @@ export class ResumeService {
 
   deleteResume(resumeId: number): Observable<any> {
     return this.http.delete<any>(`${this.apiUrl}/resume/${resumeId}`);
+  }
+
+  askVoiceAssistant(question: string, history: ChatMessage[]): Observable<{ answer: string }> {
+    return this.http.post<{ answer: string }>(`${this.apiUrl}/voice-assistant/ask`, { question, history });
   }
 }
